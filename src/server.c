@@ -1,4 +1,3 @@
-```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +6,9 @@
 #include <stdarg.h>
 #include <time.h>
 #include <arpa/inet.h>
-#include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #define PORT        9000
 #define MAX_CLIENTS 100
@@ -24,7 +23,7 @@ static client_t *clients[MAX_CLIENTS];
 static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 static FILE *log_file;
 
-// Escribe un evento con timestamp en logs/chat.log
+// Loguea un evento con timestamp en logs/chat.log
 void log_event(const char *format, ...) {
     time_t now = time(NULL);
     char tbuf[64];
@@ -40,7 +39,6 @@ void log_event(const char *format, ...) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// Añade un cliente al array global
 void add_client(client_t *cl) {
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; ++i) {
@@ -52,7 +50,6 @@ void add_client(client_t *cl) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// Elimina un cliente del array global
 void remove_client(client_t *cl) {
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; ++i) {
@@ -64,7 +61,6 @@ void remove_client(client_t *cl) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// Envía un mensaje a todos los clientes conectados
 void broadcast_message(const char *message) {
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; ++i) {
@@ -77,7 +73,6 @@ void broadcast_message(const char *message) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// Hilo encargado de manejar la comunicación con un cliente
 void *handle_client(void *arg) {
     client_t *cli = (client_t *)arg;
     char buf[BUF_SIZE];
@@ -91,7 +86,7 @@ void *handle_client(void *arg) {
         pthread_detach(pthread_self());
         return NULL;
     }
-    cli->username[nbytes-1] = '\0'; // elimina '\n'
+    cli->username[nbytes-1] = '\0';  // elimina '\n'
 
     log_event("%s se ha conectado\n", cli->username);
     snprintf(buf, sizeof(buf), "%s se ha unido al chat\n", cli->username);
@@ -123,43 +118,56 @@ int main() {
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t cli_len = sizeof(cli_addr);
 
-    // Abrir log
+    // Abrir archivo de log
     log_file = fopen("logs/chat.log", "a");
     if (!log_file) { perror("fopen"); exit(EXIT_FAILURE); }
 
-    // Crear socket
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenfd < 0) { perror("socket"); exit(EXIT_FAILURE); }
+    // Crear socket TCP
+    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket"); exit(EXIT_FAILURE);
+    }
 
     serv_addr.sin_family      = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port        = htons(PORT);
 
-    // Bind
+    // Asociar socket
     if (bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("bind"); close(listenfd); exit(EXIT_FAILURE);
+        perror("bind");
+        close(listenfd);
+        exit(EXIT_FAILURE);
     }
 
-    // Listen
-    if (listen(listenfd, 10) < 0) { perror("listen"); close(listenfd); exit(EXIT_FAILURE); }
+    // Escuchar conexiones
+    if (listen(listenfd, 10) < 0) {
+        perror("listen");
+        close(listenfd);
+        exit(EXIT_FAILURE);
+    }
     printf("Servidor escuchando en puerto %d\n", PORT);
 
-    // Aceptar clientes
+    // Bucle principal: aceptar clientes
     while (1) {
         connfd = accept(listenfd, (struct sockaddr*)&cli_addr, &cli_len);
-        if (connfd < 0) { perror("accept"); continue; }
+        if (connfd < 0) {
+            perror("accept");
+            continue;
+        }
 
         client_t *cli = malloc(sizeof(client_t));
         cli->sockfd = connfd;
         memset(cli->username, 0, sizeof(cli->username));
 
         add_client(cli);
+
         pthread_t tid;
-        pthread_create(&tid, NULL, handle_client, cli);
+        if (pthread_create(&tid, NULL, &handle_client, cli) != 0) {
+            perror("pthread_create");
+            free(cli);
+        }
     }
 
     fclose(log_file);
     close(listenfd);
     return 0;
 }
-```

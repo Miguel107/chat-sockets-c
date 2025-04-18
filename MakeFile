@@ -1,0 +1,17 @@
+CC      = gcc
+CFLAGS  = -Wall -pthread -Iinclude
+SRCDIR  = src
+BINDIR  = bin
+
+all: server client
+
+server: $(SRCDIR)/server.c
+	@mkdir -p $(BINDIR)
+	$(CC) $(CFLAGS) $< -o $(BINDIR)/server
+
+client: $(SRCDIR)/client.c
+	@mkdir -p $(BINDIR)
+	$(CC) $(CFLAGS) $< -o $(BINDIR)/client
+
+clean:
+	rm -rf $(BINDIR)/*
