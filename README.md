@@ -70,6 +70,75 @@ La estrategia de desarrollo fue dividir el proyecto en pasos claros y hacer prue
 • Despliegue en VM local y en AWS EC2
 • Configuración de puertos y reglas de seguridad
 
+## ¿Cómo ejecutar el código?
+### 1. Prerrequisitos
+
+Instalar:
+- **Git**  
+- **GCC**
+- **Make**  
+
+
+### 2. Clonar el repositorio
+
+```bash
+git clone https://github.com/Miguel107/chat-sockets-c.git
+cd chat-sockets-c
+```
+
+### 3. Preparar carpeta de logs
+
+El servidor escribe en `logs/chat.log`. Crea la carpeta si no existe:
+
+```bash
+mkdir -p logs
+```
+
+### 4. Compilar
+
+```bash
+make
+```
+
+### 5. Ejecutar el servidor
+
+En una terminal nueva:
+
+```bash
+./bin/server
+```
+
+Deberías ver:
+```
+Servidor escuchando en puerto 9000
+```
+
+### 6. Ejecutar clientes
+
+Abre una o más terminales adicionales y lanza:
+
+```bash
+./bin/client 127.0.0.1 9000
+```
+
+- Cuando aparezca `Usuario: `, escribe tu nombre y pulsa **Enter**.
+
+## 7. Probar la comunicación
+
+- Escribe mensajes en cualquier cliente: se retransmitirán a todos.  
+- Revisa `logs/chat.log` para ver conexiones, mensajes y desconexiones.
+
+### 8. Detener todo
+
+1. En cada cliente, escribe:
+   ```text
+   exit
+   ```
+2. En la terminal del servidor, presiona:
+   ```
+   Ctrl + C
+   ```
+
 ## Conclusiones
 
 Este proyecto nos ha permitido adquirir experiencia práctica en:
